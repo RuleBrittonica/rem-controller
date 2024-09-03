@@ -824,9 +824,13 @@ impl MatchCallSite<'_> {
 #[derive(Debug)]
 pub struct NonLocalControlFlowResult {
     pub success: bool,
+    #[allow(dead_code)]
     pub has_return: bool,
+    #[allow(dead_code)]
     pub has_continue: bool,
+    #[allow(dead_code)]
     pub has_break: bool,
+    #[allow(dead_code)]
     pub num_inputs: usize,
 }
 
