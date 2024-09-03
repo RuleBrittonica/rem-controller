@@ -1,13 +1,43 @@
 use std::fs;
 
-use convert_case::{Case, Casing};
+use convert_case::{
+    Case,
+    Casing
+};
 use log::debug;
-use proc_macro2::{Ident, Span};
-use quote::{quote, ToTokens};
-use rem_utils::{format_source, FindCallee};
+use proc_macro2::{
+    Ident,
+    Span
+};
+use quote::{
+    quote,
+    ToTokens
+};
+use rem_utils::{
+    format_source,
+    FindCallee
+};
 use syn::visit_mut::VisitMut;
-use syn::{Block, Expr, ExprCall, ExprMatch, ExprMethodCall, ExprReturn, ExprTry, ImplItemMethod, Item, ItemFn, ItemImpl, ItemMod, ItemTrait, ReturnType, Signature, Stmt, TraitItemMethod, Type};
-use syn::token::Brace;
+use syn::{
+    Block,
+    Expr,
+    ExprCall,
+    ExprMatch,
+    ExprMethodCall,
+    ExprReturn, ExprTry,
+    ImplItemMethod,
+    // Item,
+    ItemFn,
+    // ItemImpl,
+    ItemMod,
+    // ItemTrait,
+    ReturnType,
+    Signature,
+    Stmt,
+    TraitItemMethod,
+    Type
+};
+// use syn::token::Brace;
 
 const ENUM_NAME: &str = "Ret";
 
