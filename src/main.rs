@@ -75,7 +75,7 @@ fn test() {
 
     for file in fs::read_dir("./input").unwrap() {
         num_tests += 1;
-        
+
         let test_name = file.unwrap().file_name().to_owned();
         if test_name.to_str().unwrap() == "if_return_unit_controller.rs" {
             continue;
@@ -124,6 +124,31 @@ fn test() {
                 test_name.to_str().unwrap(),
                 time_elapsed
             );
+            // if the test path is /output/break_controller.rs, the we need to
+            // delete the break_controller.exe and break_controller.pdb files
+            // This is for windows
+            #[cfg(windows)]
+            {
+                // Remove the .rs from the end of test_name
+                let test_name = test_name.to_str().unwrap().split('.').collect::<Vec<&str>>()[0];
+                let exe_file: String = format!("{}.exe", test_name);
+                let pdb_file: String = format!("{}.pdb", test_name);
+                if fs::metadata(exe_file.clone()).is_ok() {
+                    fs::remove_file(exe_file.clone()).unwrap();
+                }
+                if fs::metadata(pdb_file.clone()).is_ok() {
+                    fs::remove_file(pdb_file.clone()).unwrap();
+                }
+            }
+            #[cfg(unix)]
+            {
+                // Remove the .rs from the end of test_name
+                let test_name = test_name.to_str().unwrap().split('.').collect::<Vec<&str>>()[0];
+                let exe_file: String = format!(".{}", test_name);
+                if fs::metadata(exe_file.clone()).is_ok() {
+                    fs::remove_file(exe_file.clone()).unwrap();
+                }
+            }
             println!("------------------------------------------------------------------\n");
         } else {
             println!("FAILED: {} in {:#?}", test_name.to_str().unwrap(), time_elapsed);
