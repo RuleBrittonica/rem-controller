@@ -1,5 +1,3 @@
-use std::fs;
-
 use convert_case::{
     Case,
     Casing
