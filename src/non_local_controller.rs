@@ -19,6 +19,8 @@ use rem_utils::{
 };
 use syn::visit_mut::VisitMut;
 use syn::{
+    File,
+    parse_str,
     Block,
     Expr,
     ExprCall,
@@ -39,7 +41,16 @@ use syn::{
 };
 // use syn::token::Brace;
 
+use crate::error::ControllerError;
+
 const ENUM_NAME: &str = "Ret";
+
+#[derive(Debug, Clone, PartialEq, Hash)]
+pub struct ControllerInput {
+    pub input_code: String, // the original input code
+    pub caller_fn_name: String,
+    pub callee_fn_name: String,
+}
 
 fn make_pascal_case(s: &str) -> String {
     let result = s.to_case(Case::Pascal);
@@ -832,19 +843,20 @@ pub struct NonLocalControlFlowResult {
     pub has_break: bool,
     #[allow(dead_code)]
     pub num_inputs: usize,
+    #[allow(dead_code)]
+    pub output_code: String,
 }
 
 pub fn inner_make_controls(
-    file_name: &str,
-    new_file_name: &str,
+    input_code: String,
     callee_fn_name: &str,
     caller_fn_name: &str,
 ) -> NonLocalControlFlowResult {
-    let mut success = true;
+    let mut success: bool = true;
     debug!("debugging controller...");
-    let file_content: String = fs::read_to_string(&file_name).unwrap().parse().unwrap();
+    let file_content: String = input_code;
 
-    let mut file = syn::parse_str::<syn::File>(file_content.as_str())
+    let mut file: File = parse_str::<File>(file_content.clone().as_str())
         .map_err(|e| {
             let s = format!("THERE IS AN ERROR HERE NOT PARSED: {:?}", e);
             println!("errored: {}", &s);
@@ -852,8 +864,8 @@ pub fn inner_make_controls(
         })
         .unwrap();
 
-    let mut caller_rety = ReturnType::Default;
-    let mut caller_visitor = CallerVisitor {
+    let mut caller_rety: ReturnType = ReturnType::Default;
+    let mut caller_visitor: CallerVisitor<'_> = CallerVisitor {
         found: false,
         caller_fn_name,
         callee_finder: &mut FindCallee {
@@ -873,6 +885,7 @@ pub fn inner_make_controls(
             has_continue: false,
             has_break: false,
             num_inputs: 0,
+            output_code: file_content,
         };
     }
 
@@ -896,6 +909,7 @@ pub fn inner_make_controls(
             has_continue: false,
             has_break: false,
             num_inputs: 0,
+            output_code: file_content,
         };
     }
 
@@ -969,27 +983,32 @@ pub fn inner_make_controls(
         caller_matcher.visit_file_mut(&mut file);
 
         if !caller_matcher.added_enum {
-            file.items.push(syn::parse_str(enum_str.as_str()).unwrap());
+            file.items.push( parse_str( enum_str.as_str() ).unwrap());
         }
     }
-    let file = file.into_token_stream().to_string();
-    fs::write(new_file_name.to_string(), format_source(&file)).unwrap();
+    let src: String = file.into_token_stream().to_string();
     NonLocalControlFlowResult {
         success,
         has_return: callee_visitor.has_return,
         has_continue: callee_visitor.has_continue,
         has_break: callee_visitor.has_break,
         num_inputs: callee_visitor.num_inputs,
+        output_code: format_source( &src ),
     }
 }
 
 pub fn make_controls(
-    file_name: &str,
-    new_file_name: &str,
-    callee_fn_name: &str,
-    caller_fn_name: &str,
-) -> bool {
-    let res = inner_make_controls(file_name, new_file_name, callee_fn_name, caller_fn_name);
+    input: ControllerInput,
+) -> Result<String, ControllerError> {
+    let res: NonLocalControlFlowResult = inner_make_controls(
+        input.input_code,
+        &input.callee_fn_name,
+        &input.caller_fn_name
+    );
     debug!("result: {:?}", res);
-    res.success
+    if res.success {
+        Ok(res.output_code)
+    } else {
+        Err(ControllerError::MakeControlsFailed)
+    }
 }
