@@ -1,6 +1,6 @@
 [package]
 name = "rem-controller"
-version = "0.1.3"
+version = "0.1.4"
 edition = "2021"
 authors = ["Sewen Thy <me@sewenthy.dev>", "Matt Britton <matt.britton@anu.edu.au>"]
 license = "MIT"
